@@ -5,6 +5,8 @@ extern crate time;
 mod test_zex {
     use time::PreciseTime;
     use rz80;
+    use rz80::Register8::*;
+    use rz80::Register16::*;
     
     static ZEXDOC: &'static [u8] = include_bytes!("zexdoc.com");
     static ZEXALL: &'static [u8] = include_bytes!("zexall.com");
@@ -14,14 +16,14 @@ mod test_zex {
 
     // emulates a CP/M BDOS call, only what's needed by ZEX
     fn cpm_bdos(cpu: &mut rz80::CPU) {
-        match cpu.reg.c() {
+        match cpu.reg.get8(C) {
             2 => {
                 // output a character
-                print!("{}", cpu.reg.e() as u8 as char);
+                print!("{}", cpu.reg.get8(E) as u8 as char);
             },
             9 => {
                 // output a string
-                let mut addr = cpu.reg.de();
+                let mut addr = cpu.reg.get16(DE);
                 loop {
                     let c = cpu.mem.r8(addr) as u8;
                     addr = (addr + 1) & 0xFFFF;
@@ -34,7 +36,7 @@ mod test_zex {
                 }
             },
             _ => {
-                panic!("Unknown CP/M call {}!", cpu.reg.c());
+                panic!("Unknown CP/M call {}!", cpu.reg.get8(C));
             }
         }
         cpu.ret();
@@ -46,7 +48,7 @@ mod test_zex {
         let mut cpu = rz80::CPU::new_64k();
         let mut bus = DummyBus { };
         cpu.mem.write(0x0100, prog);
-        cpu.reg.set_sp(0xF000);
+        cpu.reg.set16(SP, 0xF000);
         cpu.reg.set_pc(0x0100);
         loop {
             num_ops += 1;

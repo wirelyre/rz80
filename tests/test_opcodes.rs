@@ -5,18 +5,11 @@ extern crate rz80;
 mod test_opcodes {
     use std::cell::Cell;
     use rz80;
-    use rz80::RegT as RegT;
-    use rz80::CF as CF;
-    use rz80::NF as NF;
-    use rz80::VF as VF;
-    use rz80::PF as PF;
-    use rz80::XF as XF;
-    use rz80::HF as HF;
-    use rz80::YF as YF;
-    use rz80::ZF as ZF;
-    use rz80::SF as SF;
+    use rz80::Register8::*;
+    use rz80::Register16::*;
+    use rz80::{RegT, CF, NF, VF, PF, XF, HF, YF, ZF, SF};
 
-    struct TestBus { 
+    struct TestBus {
         pub port: Cell<RegT>,
         pub val: Cell<RegT>,
     }
@@ -39,9 +32,9 @@ mod test_opcodes {
     }
 
     fn flags(cpu: &rz80::CPU, expected: rz80::RegT) -> bool {
-        (cpu.reg.f() & !(XF|YF)) == expected
+        (cpu.reg.get8(F) & !(XF|YF)) == expected
     }
-   
+
     #[test]
     fn test_ld_r_s() {
         let mut cpu = rz80::CPU::new_64k();
@@ -65,23 +58,23 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        cpu.reg.set_a(0x12);
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.b());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.c());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.d());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.e());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.h());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.l());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.a());
-        cpu.reg.set_b(0x13);
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.c());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.d());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.e());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.h());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.l());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.a());
+        cpu.reg.set8(A, 0x12);
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(B));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(C));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(D));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(E));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(H));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(L));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(A));
+        cpu.reg.set8(B, 0x13);
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.get8(C));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.get8(D));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.get8(E));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.get8(H));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.get8(L));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x13, cpu.reg.get8(A));
     }
-    
+
     #[test]
     fn test_ld_ihl() {
         let mut cpu = rz80::CPU::new_64k();
@@ -96,17 +89,17 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0100, &prog);
 
-        cpu.reg.set_a(0x33);
-        cpu.reg.set_hl(0x1000);
+        cpu.reg.set8(A, 0x33);
+        cpu.reg.set16(HL, 0x1000);
         cpu.reg.set_pc(0x0100);
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.mem.r8(0x1000));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.b());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.c());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.d());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.e());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.h());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.get8(B));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.get8(C));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.get8(D));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.get8(E));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.get8(H));
     }
-    
+
     #[test]
     fn test_ld_ihl_n() {
         let mut cpu = rz80::CPU::new_64k();
@@ -119,9 +112,9 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x2000, cpu.reg.hl());    
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x2000, cpu.reg.get16(HL));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x33, cpu.mem.r8(0x2000));
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.hl());    
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(HL));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x65, cpu.mem.r8(0x1000));
     }
 
@@ -139,14 +132,14 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x2000, cpu.reg.ix());    
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x2000, cpu.reg.get16(IX));
         assert_eq!(19, cpu.step(bus)); assert_eq!(0x33, cpu.mem.r8(0x2002));
         assert_eq!(19, cpu.step(bus)); assert_eq!(0x11, cpu.mem.r8(0x1FFE));
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.iy());    
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(IY));
         assert_eq!(19, cpu.step(bus)); assert_eq!(0x22, cpu.mem.r8(0x1001));
         assert_eq!(19, cpu.step(bus)); assert_eq!(0x44, cpu.mem.r8(0x0FFF));
     }
-    
+
     #[test]
     fn test_ld_ddixiy_nn() {
         let mut cpu = rz80::CPU::new_64k();
@@ -161,12 +154,12 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.bc());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.de());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.hl());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1368, cpu.reg.sp());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x4321, cpu.reg.ix());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x8765, cpu.reg.iy());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(BC));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.get16(DE));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.get16(HL));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1368, cpu.reg.get16(SP));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x4321, cpu.reg.get16(IX));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x8765, cpu.reg.get16(IY));
     }
 
     #[test]
@@ -189,15 +182,15 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(16, cpu.step(bus)); assert_eq!(0x0201, cpu.reg.hl());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0302, cpu.reg.bc());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0403, cpu.reg.de());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0504, cpu.reg.hl());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0605, cpu.reg.sp());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0706, cpu.reg.ix());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0807, cpu.reg.iy());
+        assert_eq!(16, cpu.step(bus)); assert_eq!(0x0201, cpu.reg.get16(HL));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0302, cpu.reg.get16(BC));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0403, cpu.reg.get16(DE));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0504, cpu.reg.get16(HL));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0605, cpu.reg.get16(SP));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0706, cpu.reg.get16(IX));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0807, cpu.reg.get16(IY));
     }
-    
+
     #[test]
     fn test_ld_sp_hlixiy() {
         let mut cpu = rz80::CPU::new_64k();
@@ -212,12 +205,12 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.hl());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.ix());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.iy());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.sp());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.sp());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.sp());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(HL));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.get16(IX));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.get16(IY));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(SP));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.get16(SP));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.get16(SP));
     }
 
     #[test]
@@ -250,22 +243,22 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.ix());
-        assert_eq!(19, cpu.step(bus)); assert_eq!(4, cpu.reg.a());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(5, cpu.reg.b());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(6, cpu.reg.c());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(3, cpu.reg.d());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(2, cpu.reg.e());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(7, cpu.reg.h());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(1, cpu.reg.l());      
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1004, cpu.reg.iy());
-        assert_eq!(19, cpu.step(bus)); assert_eq!(5, cpu.reg.a());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(6, cpu.reg.b());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(7, cpu.reg.c());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(4, cpu.reg.d());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(3, cpu.reg.e());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(8, cpu.reg.h());      
-        assert_eq!(19, cpu.step(bus)); assert_eq!(2, cpu.reg.l());      
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.get16(IX));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(4, cpu.reg.get8(A));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(5, cpu.reg.get8(B));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(6, cpu.reg.get8(C));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(3, cpu.reg.get8(D));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(2, cpu.reg.get8(E));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(7, cpu.reg.get8(H));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(1, cpu.reg.get8(L));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1004, cpu.reg.get16(IY));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(5, cpu.reg.get8(A));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(6, cpu.reg.get8(B));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(7, cpu.reg.get8(C));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(4, cpu.reg.get8(D));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(3, cpu.reg.get8(E));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(8, cpu.reg.get8(H));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(2, cpu.reg.get8(L));
     }
 
     #[test]
@@ -306,36 +299,36 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.ix());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x12, cpu.reg.a());         
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x12, cpu.mem.r8(0x1003));  
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x13, cpu.reg.b());         
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x13, cpu.mem.r8(0x1004));  
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x14, cpu.reg.c());         
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x14, cpu.mem.r8(0x1005));  
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.reg.d());         
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x15, cpu.mem.r8(0x1002));  
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x16, cpu.reg.e());         
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x16, cpu.mem.r8(0x1001));  
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x17, cpu.reg.h());         
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x17, cpu.mem.r8(0x1006));  
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x18, cpu.reg.l());         
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x18, cpu.mem.r8(0x1000));  
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.iy());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x12, cpu.reg.a());        
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x12, cpu.mem.r8(0x1003)); 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x13, cpu.reg.b());        
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x13, cpu.mem.r8(0x1004)); 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x14, cpu.reg.c());        
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x14, cpu.mem.r8(0x1005)); 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.reg.d());        
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x15, cpu.mem.r8(0x1002)); 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x16, cpu.reg.e());        
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x16, cpu.mem.r8(0x1001)); 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x17, cpu.reg.h());        
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x17, cpu.mem.r8(0x1006)); 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x18, cpu.reg.l());        
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x18, cpu.mem.r8(0x1000)); 
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.get16(IX));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(A));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x12, cpu.mem.r8(0x1003));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x13, cpu.reg.get8(B));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x13, cpu.mem.r8(0x1004));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x14, cpu.reg.get8(C));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x14, cpu.mem.r8(0x1005));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.reg.get8(D));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x15, cpu.mem.r8(0x1002));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x16, cpu.reg.get8(E));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x16, cpu.mem.r8(0x1001));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x17, cpu.reg.get8(H));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x17, cpu.mem.r8(0x1006));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x18, cpu.reg.get8(L));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x18, cpu.mem.r8(0x1000));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.get16(IY));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(A));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x12, cpu.mem.r8(0x1003));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x13, cpu.reg.get8(B));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x13, cpu.mem.r8(0x1004));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x14, cpu.reg.get8(C));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x14, cpu.mem.r8(0x1005));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.reg.get8(D));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x15, cpu.mem.r8(0x1002));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x16, cpu.reg.get8(E));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x16, cpu.mem.r8(0x1001));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x17, cpu.reg.get8(H));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x17, cpu.mem.r8(0x1006));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x18, cpu.reg.get8(L));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x18, cpu.mem.r8(0x1000));
     }
 
     #[test]
@@ -365,25 +358,25 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.bc());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.de());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.hl());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xEF00, cpu.reg.af());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x2345, cpu.reg.ix());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x6789, cpu.reg.iy());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0100, cpu.reg.sp());
-        assert_eq!(11, cpu.step(bus)); assert_eq!(0xEF00, cpu.mem.r16(0x00FE)); assert_eq!(0x00FE, cpu.reg.sp());
-        assert_eq!(11, cpu.step(bus)); assert_eq!(0x1234, cpu.mem.r16(0x00FC)); assert_eq!(0x00FC, cpu.reg.sp());
-        assert_eq!(11, cpu.step(bus)); assert_eq!(0x5678, cpu.mem.r16(0x00FA)); assert_eq!(0x00FA, cpu.reg.sp());
-        assert_eq!(11, cpu.step(bus)); assert_eq!(0x9ABC, cpu.mem.r16(0x00F8)); assert_eq!(0x00F8, cpu.reg.sp());
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x2345, cpu.mem.r16(0x00F6)); assert_eq!(0x00F6, cpu.reg.sp());
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x6789, cpu.mem.r16(0x00F4)); assert_eq!(0x00F4, cpu.reg.sp());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x6789, cpu.reg.af()); assert_eq!(0x00F6, cpu.reg.sp());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x2345, cpu.reg.bc()); assert_eq!(0x00F8, cpu.reg.sp());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.de()); assert_eq!(0x00FA, cpu.reg.sp());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.hl()); assert_eq!(0x00FC, cpu.reg.sp());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.ix()); assert_eq!(0x00FE, cpu.reg.sp());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0xEF00, cpu.reg.iy()); assert_eq!(0x0100, cpu.reg.sp());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(BC));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.get16(DE));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.get16(HL));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xEF00, cpu.reg.get16(AF));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x2345, cpu.reg.get16(IX));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x6789, cpu.reg.get16(IY));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0100, cpu.reg.get16(SP));
+        assert_eq!(11, cpu.step(bus)); assert_eq!(0xEF00, cpu.mem.r16(0x00FE)); assert_eq!(0x00FE, cpu.reg.get16(SP));
+        assert_eq!(11, cpu.step(bus)); assert_eq!(0x1234, cpu.mem.r16(0x00FC)); assert_eq!(0x00FC, cpu.reg.get16(SP));
+        assert_eq!(11, cpu.step(bus)); assert_eq!(0x5678, cpu.mem.r16(0x00FA)); assert_eq!(0x00FA, cpu.reg.get16(SP));
+        assert_eq!(11, cpu.step(bus)); assert_eq!(0x9ABC, cpu.mem.r16(0x00F8)); assert_eq!(0x00F8, cpu.reg.get16(SP));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x2345, cpu.mem.r16(0x00F6)); assert_eq!(0x00F6, cpu.reg.get16(SP));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x6789, cpu.mem.r16(0x00F4)); assert_eq!(0x00F4, cpu.reg.get16(SP));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x6789, cpu.reg.get16(AF)); assert_eq!(0x00F6, cpu.reg.get16(SP));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x2345, cpu.reg.get16(BC)); assert_eq!(0x00F8, cpu.reg.get16(SP));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.get16(DE)); assert_eq!(0x00FA, cpu.reg.get16(SP));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.get16(HL)); assert_eq!(0x00FC, cpu.reg.get16(SP));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(IX)); assert_eq!(0x00FE, cpu.reg.get16(SP));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0xEF00, cpu.reg.get16(IY)); assert_eq!(0x0100, cpu.reg.get16(SP));
     }
 
     #[test]
@@ -406,26 +399,26 @@ mod test_opcodes {
             0x84,           // ADD A,H
             0x2E, 0x33,     // LD L,0x33
             0x85,           // ADD A,L
-            0xC6, 0x44,     // ADD A,0x44        
+            0xC6, 0x44,     // ADD A,0x44
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x0F, cpu.reg.a()); assert!(flags(&cpu, 0));      
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x1E, cpu.reg.a()); assert!(flags(&cpu, HF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xE0, cpu.reg.b());                  
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.a()); assert!(flags(&cpu, SF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x81, cpu.reg.a());                  
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.c());                  
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, VF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.d());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|HF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x40, cpu.reg.e());                  
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x40, cpu.reg.a()); assert!(flags(&cpu, 0));      
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.h());                  
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xC0, cpu.reg.a()); assert!(flags(&cpu, SF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.l());                  
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xF3, cpu.reg.a()); assert!(flags(&cpu, SF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x37, cpu.reg.a()); assert!(flags(&cpu, CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x0F, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x1E, cpu.reg.get8(A)); assert!(flags(&cpu, HF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xE0, cpu.reg.get8(B));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.get8(A)); assert!(flags(&cpu, SF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x81, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.get8(C));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, VF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(D));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|HF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x40, cpu.reg.get8(E));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x40, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.get8(H));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xC0, cpu.reg.get8(A)); assert!(flags(&cpu, SF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x33, cpu.reg.get8(L));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xF3, cpu.reg.get8(A)); assert!(flags(&cpu, SF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x37, cpu.reg.get8(A)); assert!(flags(&cpu, CF));
     }
 
     #[test]
@@ -446,13 +439,13 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.ix());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.iy());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xA2, cpu.reg.a()); assert!(flags(&cpu, SF|VF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x23, cpu.reg.a()); assert!(flags(&cpu, VF|CF));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(IX));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.get16(IY));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xA2, cpu.reg.get8(A)); assert!(flags(&cpu, SF|VF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x23, cpu.reg.get8(A)); assert!(flags(&cpu, VF|CF));
     }
 
     #[test]
@@ -478,21 +471,21 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.b());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x61, cpu.reg.c());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x81, cpu.reg.d());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.e());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x61, cpu.reg.h());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x81, cpu.reg.l());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xA2, cpu.reg.a()); assert!(flags(&cpu, SF|VF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x23, cpu.reg.a()); assert!(flags(&cpu, VF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x65, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xC6, cpu.reg.a()); assert!(flags(&cpu, SF|VF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x47, cpu.reg.a()); assert!(flags(&cpu, VF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x49, cpu.reg.a()); assert!(flags(&cpu, 0));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(B));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x61, cpu.reg.get8(C));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x81, cpu.reg.get8(D));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(E));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x61, cpu.reg.get8(H));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x81, cpu.reg.get8(L));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xA2, cpu.reg.get8(A)); assert!(flags(&cpu, SF|VF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x23, cpu.reg.get8(A)); assert!(flags(&cpu, VF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x65, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xC6, cpu.reg.get8(A)); assert!(flags(&cpu, SF|VF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x47, cpu.reg.get8(A)); assert!(flags(&cpu, VF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x49, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
     }
 
     #[test]
@@ -513,14 +506,14 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.ix());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.iy());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xA2, cpu.reg.a()); assert!(flags(&cpu, SF|VF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x23, cpu.reg.a()); assert!(flags(&cpu, VF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x26, cpu.reg.a()); assert!(flags(&cpu, 0));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(IX));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.get16(IY));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xA2, cpu.reg.get8(A)); assert!(flags(&cpu, SF|VF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x23, cpu.reg.get8(A)); assert!(flags(&cpu, VF|CF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x26, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
     }
 
     #[test]
@@ -547,22 +540,22 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.b());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xF8, cpu.reg.c());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x0F, cpu.reg.d());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x79, cpu.reg.e());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xC0, cpu.reg.h());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xBF, cpu.reg.l());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x07, cpu.reg.a()); assert!(flags(&cpu, NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xF8, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x7F, cpu.reg.a()); assert!(flags(&cpu, HF|VF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xBF, cpu.reg.a()); assert!(flags(&cpu, SF|VF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, NF));        
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(B));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xF8, cpu.reg.get8(C));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x0F, cpu.reg.get8(D));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x79, cpu.reg.get8(E));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xC0, cpu.reg.get8(H));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xBF, cpu.reg.get8(L));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x07, cpu.reg.get8(A)); assert!(flags(&cpu, NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xF8, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x7F, cpu.reg.get8(A)); assert!(flags(&cpu, HF|VF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xBF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|VF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, NF));
     }
 
     #[test]
@@ -588,21 +581,21 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x05, cpu.reg.b());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x03, cpu.reg.c());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xff, cpu.reg.d());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xaa, cpu.reg.e());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.h());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x7f, cpu.reg.l());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF)); 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a()); assert!(flags(&cpu, NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a()); assert!(flags(&cpu, HF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a()); assert!(flags(&cpu, HF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a()); assert!(flags(&cpu, SF|VF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));        
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x05, cpu.reg.get8(B));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x03, cpu.reg.get8(C));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xff, cpu.reg.get8(D));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xaa, cpu.reg.get8(E));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.get8(H));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x7f, cpu.reg.get8(L));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A)); assert!(flags(&cpu, NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A)); assert!(flags(&cpu, HF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A)); assert!(flags(&cpu, HF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A)); assert!(flags(&cpu, SF|VF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
     }
 
     #[test]
@@ -622,13 +615,13 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.ix());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.iy());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xBF, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x5E, cpu.reg.a()); assert!(flags(&cpu, VF|NF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFD, cpu.reg.a()); assert!(flags(&cpu, SF|NF|CF));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(IX));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.get16(IY));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xBF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x5E, cpu.reg.get8(A)); assert!(flags(&cpu, VF|NF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFD, cpu.reg.get8(A)); assert!(flags(&cpu, SF|NF|CF));
     }
 
     #[test]
@@ -648,13 +641,13 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.ix());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.iy());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); assert!(flags(&cpu, SF|NF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); assert!(flags(&cpu, HF|NF));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(IX));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.get16(IY));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A)); assert!(flags(&cpu, SF|NF|CF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A)); assert!(flags(&cpu, HF|NF));
     }
 
     #[test]
@@ -684,15 +677,15 @@ mod test_opcodes {
         for _ in 0..7 {
             cpu.step(bus);
         }
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x06, cpu.reg.a()); assert!(flags(&cpu, NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xF7, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x7D, cpu.reg.a()); assert!(flags(&cpu, HF|VF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xBD, cpu.reg.a()); assert!(flags(&cpu, SF|VF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFD, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFB, cpu.reg.a()); assert!(flags(&cpu, SF|NF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFD, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));        
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x06, cpu.reg.get8(A)); assert!(flags(&cpu, NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xF7, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x7D, cpu.reg.get8(A)); assert!(flags(&cpu, HF|VF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xBD, cpu.reg.get8(A)); assert!(flags(&cpu, SF|VF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFD, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFB, cpu.reg.get8(A)); assert!(flags(&cpu, SF|NF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFD, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
     }
 
     #[test]
@@ -712,13 +705,13 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.ix());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.iy());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xBF, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x5D, cpu.reg.a()); assert!(flags(&cpu, VF|NF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFC, cpu.reg.a()); assert!(flags(&cpu, SF|NF|CF));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(IX));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x1003, cpu.reg.get16(IY));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xBF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x5D, cpu.reg.get8(A)); assert!(flags(&cpu, VF|NF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFC, cpu.reg.get8(A)); assert!(flags(&cpu, SF|NF|CF));
     }
 
     #[test]
@@ -748,17 +741,17 @@ mod test_opcodes {
         for _ in 0..7 {
             cpu.step(bus);
         }
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x03, cpu.reg.a()); assert!(flags(&cpu, PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x07, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0F, cpu.reg.a()); assert!(flags(&cpu, PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x1F, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.a()); assert!(flags(&cpu, PF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x7F, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|PF));        
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x03, cpu.reg.get8(A)); assert!(flags(&cpu, PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x07, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0F, cpu.reg.get8(A)); assert!(flags(&cpu, PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x1F, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.get8(A)); assert!(flags(&cpu, PF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x7F, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
     }
-   
+
     #[test]
     fn test_xor_r() {
         let mut cpu = rz80::CPU::new_64k();
@@ -786,15 +779,15 @@ mod test_opcodes {
         for _ in 0..7 {
             cpu.step(bus);
         }
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x02, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x05, cpu.reg.a()); assert!(flags(&cpu, PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0A, cpu.reg.a()); assert!(flags(&cpu, PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x15, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x2A, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x55, cpu.reg.a()); assert!(flags(&cpu, PF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xAA, cpu.reg.a()); assert!(flags(&cpu, SF|PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x02, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x05, cpu.reg.get8(A)); assert!(flags(&cpu, PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0A, cpu.reg.get8(A)); assert!(flags(&cpu, PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x15, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x2A, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x55, cpu.reg.get8(A)); assert!(flags(&cpu, PF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xAA, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
     }
 
     #[test]
@@ -820,12 +813,12 @@ mod test_opcodes {
         for _ in 0..3 {
             cpu.step(bus);
         }
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); assert!(flags(&cpu, PF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x63, cpu.reg.a()); assert!(flags(&cpu, PF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xE7, cpu.reg.a()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xA6, cpu.reg.a()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xC4, cpu.reg.a()); assert!(flags(&cpu, SF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x40, cpu.reg.a()); assert!(flags(&cpu, 0));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A)); assert!(flags(&cpu, PF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x63, cpu.reg.get8(A)); assert!(flags(&cpu, PF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xE7, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xA6, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xC4, cpu.reg.get8(A)); assert!(flags(&cpu, SF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x40, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
     }
 
     #[test]
@@ -861,21 +854,21 @@ mod test_opcodes {
         for _ in 0..7 {
             cpu.step(bus);
         }
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, HF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x03, cpu.reg.a()); assert!(flags(&cpu, HF|PF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a()); assert!(flags(&cpu, HF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x08, cpu.reg.a()); assert!(flags(&cpu, HF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x10, cpu.reg.a()); assert!(flags(&cpu, HF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x20, cpu.reg.a()); assert!(flags(&cpu, HF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x40, cpu.reg.a()); assert!(flags(&cpu, HF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xAA, cpu.reg.a()); assert!(flags(&cpu, SF|HF|PF));        
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, HF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x03, cpu.reg.get8(A)); assert!(flags(&cpu, HF|PF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A)); assert!(flags(&cpu, HF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x08, cpu.reg.get8(A)); assert!(flags(&cpu, HF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x10, cpu.reg.get8(A)); assert!(flags(&cpu, HF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x20, cpu.reg.get8(A)); assert!(flags(&cpu, HF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x40, cpu.reg.get8(A)); assert!(flags(&cpu, HF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xAA, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|PF));
     }
 
     #[test]
@@ -899,9 +892,9 @@ mod test_opcodes {
         for _ in 0..4 {
             cpu.step(bus);
         }
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.a()); assert!(flags(&cpu, SF|HF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xAA, cpu.reg.a()); assert!(flags(&cpu, SF|HF|PF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x88, cpu.reg.a()); assert!(flags(&cpu, SF|HF|PF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xAA, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|PF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x88, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|PF));
     }
 
     #[test]
@@ -937,21 +930,21 @@ mod test_opcodes {
         for _ in 0..7 {
             cpu.step(bus);
         }
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.b()); assert!(flags(&cpu, ZF|HF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.b()); assert!(flags(&cpu, SF|HF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x10, cpu.reg.c()); assert!(flags(&cpu, HF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0F, cpu.reg.c()); assert!(flags(&cpu, HF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0F, cpu.reg.d()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0E, cpu.reg.d()); assert!(flags(&cpu, NF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x80, cpu.reg.e()); assert!(flags(&cpu, SF|HF|VF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x7F, cpu.reg.e()); assert!(flags(&cpu, HF|VF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.h()); assert!(flags(&cpu, CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x3E, cpu.reg.h()); assert!(flags(&cpu, NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x24, cpu.reg.l()); assert!(flags(&cpu, CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x23, cpu.reg.l()); assert!(flags(&cpu, NF|CF));        
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(B)); assert!(flags(&cpu, ZF|HF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(B)); assert!(flags(&cpu, SF|HF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x10, cpu.reg.get8(C)); assert!(flags(&cpu, HF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0F, cpu.reg.get8(C)); assert!(flags(&cpu, HF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0F, cpu.reg.get8(D)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0E, cpu.reg.get8(D)); assert!(flags(&cpu, NF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x80, cpu.reg.get8(E)); assert!(flags(&cpu, SF|HF|VF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x7F, cpu.reg.get8(E)); assert!(flags(&cpu, HF|VF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.get8(H)); assert!(flags(&cpu, CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x3E, cpu.reg.get8(H)); assert!(flags(&cpu, NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x24, cpu.reg.get8(L)); assert!(flags(&cpu, CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x23, cpu.reg.get8(L)); assert!(flags(&cpu, NF|CF));
     }
 
     #[test]
@@ -1014,18 +1007,18 @@ mod test_opcodes {
         for _ in 0..6 {
             cpu.step(bus);
         }
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.bc());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0000, cpu.reg.bc());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0000, cpu.reg.de());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.de());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0100, cpu.reg.hl());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x00FF, cpu.reg.hl());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x1112, cpu.reg.sp());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x1111, cpu.reg.sp());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.ix());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0FFF, cpu.reg.ix());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1235, cpu.reg.iy());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.iy());
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.get16(BC));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0000, cpu.reg.get16(BC));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0000, cpu.reg.get16(DE));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.get16(DE));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0100, cpu.reg.get16(HL));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x00FF, cpu.reg.get16(HL));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x1112, cpu.reg.get16(SP));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x1111, cpu.reg.get16(SP));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(IX));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0FFF, cpu.reg.get16(IX));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1235, cpu.reg.get16(IY));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(IY));
     }
 
     #[test]
@@ -1042,15 +1035,15 @@ mod test_opcodes {
         cpu.mem.write(0x0204, &prog);
         cpu.reg.set_pc(0x0204);
 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x03, cpu.reg.b());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a());
-        assert_eq!(13, cpu.step(bus)); assert_eq!(0x02, cpu.reg.b()); assert_eq!(0x0207, cpu.reg.pc());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x02, cpu.reg.a());
-        assert_eq!(13, cpu.step(bus)); assert_eq!(0x01, cpu.reg.b()); assert_eq!(0x0207, cpu.reg.pc());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x03, cpu.reg.a());
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.b()); assert_eq!(0x020A, cpu.reg.pc());
-    }  
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x03, cpu.reg.get8(B));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A));
+        assert_eq!(13, cpu.step(bus)); assert_eq!(0x02, cpu.reg.get8(B)); assert_eq!(0x0207, cpu.reg.pc());
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x02, cpu.reg.get8(A));
+        assert_eq!(13, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(B)); assert_eq!(0x0207, cpu.reg.pc());
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x03, cpu.reg.get8(A));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(B)); assert_eq!(0x020A, cpu.reg.pc());
+    }
 
     #[test]
     fn test_jr_cc() {
@@ -1074,13 +1067,13 @@ mod test_opcodes {
         cpu.mem.write(0x204, &prog);
         cpu.reg.set_pc(0x0204);
 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x0207, cpu.reg.pc());
         assert_eq!(12, cpu.step(bus)); assert_eq!(0x020A, cpu.reg.pc());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x020E, cpu.reg.pc());
         assert_eq!(12, cpu.step(bus)); assert_eq!(0x0211, cpu.reg.pc());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.get8(A));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x0215, cpu.reg.pc());
         assert_eq!(12, cpu.step(bus)); assert_eq!(0x0218, cpu.reg.pc());
     }
@@ -1106,16 +1099,16 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x12, cpu.reg.a());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(A));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x12, cpu.mem.r8(0x1000));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x13, cpu.reg.b());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x13, cpu.reg.get8(B));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x13, cpu.mem.r8(0x1000));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x14, cpu.reg.c());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x14, cpu.reg.get8(C));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x14, cpu.mem.r8(0x1000));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.reg.d());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.reg.get8(D));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.mem.r8(0x1000));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x16, cpu.reg.e());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x16, cpu.reg.get8(E));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x16, cpu.mem.r8(0x1000));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x10, cpu.mem.r8(0x1000));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.mem.r8(0x1000));
@@ -1144,14 +1137,14 @@ mod test_opcodes {
         for _ in 0..4 {
             cpu.step(bus);
         }
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.bc());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0000, cpu.reg.bc());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0000, cpu.reg.de());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.de());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0100, cpu.reg.hl());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x00FF, cpu.reg.hl());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x1112, cpu.reg.sp());
-        assert_eq!(6, cpu.step(bus)); assert_eq!(0x1111, cpu.reg.sp());
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.get16(BC));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0000, cpu.reg.get16(BC));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0000, cpu.reg.get16(DE));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.get16(DE));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x0100, cpu.reg.get16(HL));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x00FF, cpu.reg.get16(HL));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x1112, cpu.reg.get16(SP));
+        assert_eq!(6, cpu.step(bus)); assert_eq!(0x1111, cpu.reg.get16(SP));
     }
 
     #[test]
@@ -1169,11 +1162,11 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.bc());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1001, cpu.reg.de());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x11, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x22, cpu.reg.a());
-        assert_eq!(13, cpu.step(bus)); assert_eq!(0x33, cpu.reg.a());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(BC));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1001, cpu.reg.get16(DE));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x11, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x22, cpu.reg.get8(A));
+        assert_eq!(13, cpu.step(bus)); assert_eq!(0x33, cpu.reg.get8(A));
     }
 
     #[test]
@@ -1190,9 +1183,9 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.bc());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1001, cpu.reg.de());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x77, cpu.reg.a());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(BC));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1001, cpu.reg.get16(DE));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x77, cpu.reg.get8(A));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x77, cpu.mem.r8(0x1000));
         assert_eq!(7, cpu.step(bus)); assert_eq!(0x77, cpu.mem.r8(0x1001));
         assert_eq!(13, cpu.step(bus)); assert_eq!(0x77, cpu.mem.r8(0x1002));
@@ -1214,16 +1207,16 @@ mod test_opcodes {
             0x1F,           // RRA
         ];
         cpu.mem.write(0x0000, &prog);
-        cpu.reg.set_f(0xFF);
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xA0, cpu.reg.a());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x82, cpu.reg.a()); 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xA0, cpu.reg.a()); 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x83, cpu.reg.a()); 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x41, cpu.reg.a()); 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xA0, cpu.reg.a());      
+        cpu.reg.set8(F, 0xFF);
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xA0, cpu.reg.get8(A));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x82, cpu.reg.get8(A));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xA0, cpu.reg.get8(A));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x83, cpu.reg.get8(A));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x41, cpu.reg.get8(A));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xA0, cpu.reg.get8(A));
     }
 
     #[test]
@@ -1245,18 +1238,18 @@ mod test_opcodes {
             0x27,           // DAA
         ];
         cpu.mem.write(0x0000, &prog);
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x27, cpu.reg.b());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x3C, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x42, cpu.reg.a()); assert!(flags(&cpu, HF|PF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x1B, cpu.reg.a()); assert!(flags(&cpu, HF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x15, cpu.reg.a()); assert!(flags(&cpu, NF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x90, cpu.reg.a()); assert!(flags(&cpu, NF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.reg.b()); assert!(flags(&cpu, NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xA5, cpu.reg.a()); assert!(flags(&cpu, SF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x05, cpu.reg.a()); assert!(flags(&cpu, PF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xF0, cpu.reg.a()); assert!(flags(&cpu, SF|NF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x90, cpu.reg.a()); assert!(flags(&cpu, SF|PF|NF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x27, cpu.reg.get8(B));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x3C, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x42, cpu.reg.get8(A)); assert!(flags(&cpu, HF|PF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x1B, cpu.reg.get8(A)); assert!(flags(&cpu, HF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x15, cpu.reg.get8(A)); assert!(flags(&cpu, NF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x90, cpu.reg.get8(A)); assert!(flags(&cpu, NF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x15, cpu.reg.get8(B)); assert!(flags(&cpu, NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xA5, cpu.reg.get8(A)); assert!(flags(&cpu, SF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x05, cpu.reg.get8(A)); assert!(flags(&cpu, PF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xF0, cpu.reg.get8(A)); assert!(flags(&cpu, SF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x90, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF|NF|CF));
     }
 
     #[test]
@@ -1273,12 +1266,12 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, ZF|HF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|HF|NF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xAA, cpu.reg.a()); assert!(flags(&cpu, SF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x55, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0xAA, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|HF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|HF|NF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xAA, cpu.reg.get8(A)); assert!(flags(&cpu, SF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x55, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0xAA, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF));
     }
 
     #[test]
@@ -1295,12 +1288,12 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|HF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x34, cpu.reg.a()); assert!(flags(&cpu, HF|NF|CF)); 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x34, cpu.reg.a()); assert!(flags(&cpu, HF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x34, cpu.reg.a()); assert!(flags(&cpu, CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|HF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x34, cpu.reg.get8(A)); assert!(flags(&cpu, HF|NF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x34, cpu.reg.get8(A)); assert!(flags(&cpu, HF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x34, cpu.reg.get8(A)); assert!(flags(&cpu, CF));
     }
 
     #[test]
@@ -1317,18 +1310,18 @@ mod test_opcodes {
 
         assert_eq!(17, cpu.step(bus));
         assert_eq!(0x020A, cpu.reg.pc());
-        assert_eq!(0xFFFE, cpu.reg.sp());
+        assert_eq!(0xFFFE, cpu.reg.get16(SP));
         assert_eq!(0x0207, cpu.mem.r16(0xFFFE));
         assert_eq!(10, cpu.step(bus));
         assert_eq!(0x0207, cpu.reg.pc());
-        assert_eq!(0x0000, cpu.reg.sp());
+        assert_eq!(0x0000, cpu.reg.get16(SP));
         assert_eq!(17, cpu.step(bus));
         assert_eq!(0x020A, cpu.reg.pc());
-        assert_eq!(0xFFFE, cpu.reg.sp());
+        assert_eq!(0xFFFE, cpu.reg.get16(SP));
         assert_eq!(0x020A, cpu.mem.r16(0xFFFE));
         assert_eq!(10, cpu.step(bus));
         assert_eq!(0x020A, cpu.reg.pc());
-        assert_eq!(0x0000, cpu.reg.sp());
+        assert_eq!(0x0000, cpu.reg.get16(SP));
     }
 
     #[test]
@@ -1360,28 +1353,28 @@ mod test_opcodes {
 			0xF0,               // l3:  RET P
 			0xF8,               //      RET M
 			0xD0,               // l4:  RET NC
-			0xD8,               //      RET C<Paste>        
+			0xD8,               //      RET C<Paste>
         ];
 		cpu.mem.write(0x0204, &prog);
 		cpu.reg.set_pc(0x0204);
-		cpu.reg.set_sp(0x0100);
+		cpu.reg.set16(SP, 0x0100);
 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x0208, cpu.reg.pc());
         assert_eq!(17, cpu.step(bus)); assert_eq!(0x0229, cpu.reg.pc());
         assert_eq!(5, cpu.step(bus)); assert_eq!(0x022A, cpu.reg.pc());
         assert_eq!(11, cpu.step(bus)); assert_eq!(0x020B, cpu.reg.pc());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x0210, cpu.reg.pc());
         assert_eq!(17, cpu.step(bus)); assert_eq!(0x022B, cpu.reg.pc());
         assert_eq!(5, cpu.step(bus)); assert_eq!(0x022C, cpu.reg.pc());
         assert_eq!(11, cpu.step(bus)); assert_eq!(0x0213, cpu.reg.pc());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x02, cpu.reg.a());
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x02, cpu.reg.get8(A));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x0217, cpu.reg.pc());
         assert_eq!(17, cpu.step(bus)); assert_eq!(0x022D, cpu.reg.pc());
         assert_eq!(5, cpu.step(bus)); assert_eq!(0x022E, cpu.reg.pc());
         assert_eq!(11, cpu.step(bus)); assert_eq!(0x021A, cpu.reg.pc());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x021F, cpu.reg.pc());
         assert_eq!(17, cpu.step(bus)); assert_eq!(0x022F, cpu.reg.pc());
         assert_eq!(5, cpu.step(bus)); assert_eq!(0x0230, cpu.reg.pc());
@@ -1407,7 +1400,7 @@ mod test_opcodes {
 
     #[test]
     fn test_ex() {
-        let mut cpu = rz80::CPU::new_64k(); 
+        let mut cpu = rz80::CPU::new_64k();
         let bus = &TestBus::new();
         let prog = [
             0x21, 0x34, 0x12,       // LD HL,0x1234
@@ -1433,32 +1426,32 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.hl());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.de());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.de()); assert_eq!(0x5678, cpu.reg.hl()); 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x1100, cpu.reg.af()); assert_eq!(0x0000, cpu.reg.af_());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0000, cpu.reg.af()); assert_eq!(0x1100, cpu.reg.af_());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x2200, cpu.reg.af()); assert_eq!(0x1100, cpu.reg.af_());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x1100, cpu.reg.af()); assert_eq!(0x2200, cpu.reg.af_());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.bc());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(HL));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.get16(DE));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(DE)); assert_eq!(0x5678, cpu.reg.get16(HL));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x1100, cpu.reg.get16(AF)); assert_eq!(0x0000, cpu.reg.get16(AF_));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x0000, cpu.reg.get16(AF)); assert_eq!(0x1100, cpu.reg.get16(AF_));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x2200, cpu.reg.get16(AF)); assert_eq!(0x1100, cpu.reg.get16(AF_));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x1100, cpu.reg.get16(AF)); assert_eq!(0x2200, cpu.reg.get16(AF_));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.get16(BC));
         assert_eq!(4, cpu.step(bus));
-        assert_eq!(0x0000, cpu.reg.hl()); assert_eq!(0x5678, cpu.reg.hl_());
-        assert_eq!(0x0000, cpu.reg.de()); assert_eq!(0x1234, cpu.reg.de_());
-        assert_eq!(0x0000, cpu.reg.bc()); assert_eq!(0x9ABC, cpu.reg.bc_());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1111, cpu.reg.hl());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x2222, cpu.reg.de());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x3333, cpu.reg.bc());
+        assert_eq!(0x0000, cpu.reg.get16(HL)); assert_eq!(0x5678, cpu.reg.get16(HL_));
+        assert_eq!(0x0000, cpu.reg.get16(DE)); assert_eq!(0x1234, cpu.reg.get16(DE_));
+        assert_eq!(0x0000, cpu.reg.get16(BC)); assert_eq!(0x9ABC, cpu.reg.get16(BC_));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1111, cpu.reg.get16(HL));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x2222, cpu.reg.get16(DE));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x3333, cpu.reg.get16(BC));
         assert_eq!(4, cpu.step(bus));
-        assert_eq!(0x5678, cpu.reg.hl()); assert_eq!(0x1111, cpu.reg.hl_());
-        assert_eq!(0x1234, cpu.reg.de()); assert_eq!(0x2222, cpu.reg.de_());
-        assert_eq!(0x9ABC, cpu.reg.bc()); assert_eq!(0x3333, cpu.reg.bc_());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0100, cpu.reg.sp());
+        assert_eq!(0x5678, cpu.reg.get16(HL)); assert_eq!(0x1111, cpu.reg.get16(HL_));
+        assert_eq!(0x1234, cpu.reg.get16(DE)); assert_eq!(0x2222, cpu.reg.get16(DE_));
+        assert_eq!(0x9ABC, cpu.reg.get16(BC)); assert_eq!(0x3333, cpu.reg.get16(BC_));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0100, cpu.reg.get16(SP));
         assert_eq!(11, cpu.step(bus)); assert_eq!(0x1234, cpu.mem.r16(0x00FE));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.hl()); assert_eq!(0x5678, cpu.mem.r16(0x00FE));
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x8899, cpu.reg.ix());
-        assert_eq!(23, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.ix()); assert_eq!(0x8899, cpu.mem.r16(0x00FE));
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x6677, cpu.reg.iy());
-        assert_eq!(23, cpu.step(bus)); assert_eq!(0x8899, cpu.reg.iy()); assert_eq!(0x6677, cpu.mem.r16(0x00FE));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(HL)); assert_eq!(0x5678, cpu.mem.r16(0x00FE));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x8899, cpu.reg.get16(IX));
+        assert_eq!(23, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.get16(IX)); assert_eq!(0x8899, cpu.mem.r16(0x00FE));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x6677, cpu.reg.get16(IY));
+        assert_eq!(23, cpu.step(bus)); assert_eq!(0x8899, cpu.reg.get16(IY)); assert_eq!(0x6677, cpu.mem.r16(0x00FE));
     }
 
     #[test]
@@ -1490,21 +1483,21 @@ mod test_opcodes {
         cpu.mem.write(0x0204, &prog);
         cpu.reg.set_pc(0x0204);
 
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x0208, cpu.reg.pc());
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x020C, cpu.reg.pc());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, 0));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x0211, cpu.reg.pc());
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x0215, cpu.reg.pc());
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x02, cpu.reg.a()); assert!(flags(&cpu, 0));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x02, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x0219, cpu.reg.pc());
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x021D, cpu.reg.pc());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x0222, cpu.reg.pc());
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x0226, cpu.reg.pc());
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x022D, cpu.reg.pc());
     }
-    
+
     #[test]
     fn test_jp_jr() {
         let mut cpu = rz80::CPU::new_64k();
@@ -1527,9 +1520,9 @@ mod test_opcodes {
         cpu.mem.write(0x0204, &prog);
         cpu.reg.set_pc(0x0204);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0216, cpu.reg.hl());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x0219, cpu.reg.ix());
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x0221, cpu.reg.iy());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0216, cpu.reg.get16(HL));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x0219, cpu.reg.get16(IX));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x0221, cpu.reg.get16(IY));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x0214, cpu.reg.pc());
         assert_eq!(12, cpu.step(bus)); assert_eq!(0x0212, cpu.reg.pc());
         assert_eq!(12, cpu.step(bus)); assert_eq!(0x0218, cpu.reg.pc());
@@ -1561,25 +1554,25 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x2001, cpu.reg.de());
-        assert_eq!(0x0002, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x2001, cpu.reg.get16(DE));
+        assert_eq!(0x0002, cpu.reg.get16(BC));
         assert_eq!(0x01, cpu.mem.r8(0x2000));
         assert!(flags(&cpu, PF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1002, cpu.reg.hl());
-        assert_eq!(0x2002, cpu.reg.de());
-        assert_eq!(0x0001, cpu.reg.bc());
+        assert_eq!(0x1002, cpu.reg.get16(HL));
+        assert_eq!(0x2002, cpu.reg.get16(DE));
+        assert_eq!(0x0001, cpu.reg.get16(BC));
         assert_eq!(0x02, cpu.mem.r8(0x2001));
         assert!(flags(&cpu, PF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1003, cpu.reg.hl());
-        assert_eq!(0x2003, cpu.reg.de());
-        assert_eq!(0x0000, cpu.reg.bc());
+        assert_eq!(0x1003, cpu.reg.get16(HL));
+        assert_eq!(0x2003, cpu.reg.get16(DE));
+        assert_eq!(0x0000, cpu.reg.get16(BC));
         assert_eq!(0x03, cpu.mem.r8(0x2002));
         assert!(flags(&cpu, 0));
     }
-    
+
     #[test]
     fn test_ldir() {
         let mut cpu = rz80::CPU::new_64k();
@@ -1600,26 +1593,26 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x2001, cpu.reg.de());
-        assert_eq!(0x0002, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x2001, cpu.reg.get16(DE));
+        assert_eq!(0x0002, cpu.reg.get16(BC));
         assert_eq!(0x01, cpu.mem.r8(0x2000));
         assert!(flags(&cpu, PF));
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1002, cpu.reg.hl());
-        assert_eq!(0x2002, cpu.reg.de());
-        assert_eq!(0x0001, cpu.reg.bc());
+        assert_eq!(0x1002, cpu.reg.get16(HL));
+        assert_eq!(0x2002, cpu.reg.get16(DE));
+        assert_eq!(0x0001, cpu.reg.get16(BC));
         assert_eq!(0x02, cpu.mem.r8(0x2001));
         assert!(flags(&cpu, PF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1003, cpu.reg.hl());
-        assert_eq!(0x2003, cpu.reg.de());
-        assert_eq!(0x0000, cpu.reg.bc());
+        assert_eq!(0x1003, cpu.reg.get16(HL));
+        assert_eq!(0x2003, cpu.reg.get16(DE));
+        assert_eq!(0x0000, cpu.reg.get16(BC));
         assert_eq!(0x03, cpu.mem.r8(0x2002));
         assert!(flags(&cpu, 0));
-        cpu.step(bus); assert_eq!(0x33, cpu.reg.a());
+        cpu.step(bus); assert_eq!(0x33, cpu.reg.get8(A));
     }
- 
+
     #[test]
     fn test_ldd() {
         let mut cpu = rz80::CPU::new_64k();
@@ -1641,21 +1634,21 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x2001, cpu.reg.de());
-        assert_eq!(0x0002, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x2001, cpu.reg.get16(DE));
+        assert_eq!(0x0002, cpu.reg.get16(BC));
         assert_eq!(0x03, cpu.mem.r8(0x2002));
         assert!(flags(&cpu, PF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(0x2000, cpu.reg.de());
-        assert_eq!(0x0001, cpu.reg.bc());
+        assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(0x2000, cpu.reg.get16(DE));
+        assert_eq!(0x0001, cpu.reg.get16(BC));
         assert_eq!(0x02, cpu.mem.r8(0x2001));
         assert!(flags(&cpu, PF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x0FFF, cpu.reg.hl());
-        assert_eq!(0x1FFF, cpu.reg.de());
-        assert_eq!(0x0000, cpu.reg.bc());
+        assert_eq!(0x0FFF, cpu.reg.get16(HL));
+        assert_eq!(0x1FFF, cpu.reg.get16(DE));
+        assert_eq!(0x0000, cpu.reg.get16(BC));
         assert_eq!(0x01, cpu.mem.r8(0x2000));
         assert!(flags(&cpu, 0));
     }
@@ -1680,24 +1673,24 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x2001, cpu.reg.de());
-        assert_eq!(0x0002, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x2001, cpu.reg.get16(DE));
+        assert_eq!(0x0002, cpu.reg.get16(BC));
         assert_eq!(0x03, cpu.mem.r8(0x2002));
         assert!(flags(&cpu, PF));
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(0x2000, cpu.reg.de());
-        assert_eq!(0x0001, cpu.reg.bc());
+        assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(0x2000, cpu.reg.get16(DE));
+        assert_eq!(0x0001, cpu.reg.get16(BC));
         assert_eq!(0x02, cpu.mem.r8(0x2001));
         assert!(flags(&cpu, PF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x0FFF, cpu.reg.hl());
-        assert_eq!(0x1FFF, cpu.reg.de());
-        assert_eq!(0x0000, cpu.reg.bc());
+        assert_eq!(0x0FFF, cpu.reg.get16(HL));
+        assert_eq!(0x1FFF, cpu.reg.get16(DE));
+        assert_eq!(0x0000, cpu.reg.get16(BC));
         assert_eq!(0x01, cpu.mem.r8(0x2000));
         assert!(flags(&cpu, 0));
-        cpu.step(bus); assert_eq!(0x33, cpu.reg.a());
+        cpu.step(bus); assert_eq!(0x33, cpu.reg.get8(A));
     }
 
     #[test]
@@ -1722,25 +1715,25 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x0003, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x0003, cpu.reg.get16(BC));
         assert!(flags(&cpu, PF|NF));
-        let f = cpu.reg.f() | CF;
-        cpu.reg.set_f(f);
+        let f = cpu.reg.get8(F) | CF;
+        cpu.reg.set8(F, f);
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1002, cpu.reg.hl());
-        assert_eq!(0x0002, cpu.reg.bc());
+        assert_eq!(0x1002, cpu.reg.get16(HL));
+        assert_eq!(0x0002, cpu.reg.get16(BC));
         assert!(flags(&cpu, PF|NF|CF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1003, cpu.reg.hl());
-        assert_eq!(0x0001, cpu.reg.bc());
+        assert_eq!(0x1003, cpu.reg.get16(HL));
+        assert_eq!(0x0001, cpu.reg.get16(BC));
         assert!(flags(&cpu, ZF|PF|NF|CF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1004, cpu.reg.hl());
-        assert_eq!(0x0000, cpu.reg.bc());
+        assert_eq!(0x1004, cpu.reg.get16(HL));
+        assert_eq!(0x0000, cpu.reg.get16(BC));
         assert!(flags(&cpu, SF|HF|NF|CF));
     }
-    
+
     #[test]
     fn test_cpir() {
         let mut cpu = rz80::CPU::new_64k();
@@ -1761,22 +1754,22 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x0003, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x0003, cpu.reg.get16(BC));
         assert!(flags(&cpu, PF|NF));
-        let f = cpu.reg.f() | CF;
-        cpu.reg.set_f(f);
+        let f = cpu.reg.get8(F) | CF;
+        cpu.reg.set8(F, f);
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1002, cpu.reg.hl());
-        assert_eq!(0x0002, cpu.reg.bc());
+        assert_eq!(0x1002, cpu.reg.get16(HL));
+        assert_eq!(0x0002, cpu.reg.get16(BC));
         assert!(flags(&cpu, PF|NF|CF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1003, cpu.reg.hl());
-        assert_eq!(0x0001, cpu.reg.bc());
+        assert_eq!(0x1003, cpu.reg.get16(HL));
+        assert_eq!(0x0001, cpu.reg.get16(BC));
         assert!(flags(&cpu, ZF|PF|NF|CF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1004, cpu.reg.hl());
-        assert_eq!(0x0000, cpu.reg.bc());
+        assert_eq!(0x1004, cpu.reg.get16(HL));
+        assert_eq!(0x0000, cpu.reg.get16(BC));
         assert!(flags(&cpu, SF|HF|NF|CF));
     }
 
@@ -1802,25 +1795,25 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1002, cpu.reg.hl());
-        assert_eq!(0x0003, cpu.reg.bc());
+        assert_eq!(0x1002, cpu.reg.get16(HL));
+        assert_eq!(0x0003, cpu.reg.get16(BC));
         assert!(flags(&cpu, SF|HF|PF|NF));
-        let f = cpu.reg.f() | CF;
-        cpu.reg.set_f(f);
+        let f = cpu.reg.get8(F) | CF;
+        cpu.reg.set8(F, f);
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x0002, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x0002, cpu.reg.get16(BC));
         assert!(flags(&cpu, SF|HF|PF|NF|CF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(0x0001, cpu.reg.bc());
+        assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(0x0001, cpu.reg.get16(BC));
         assert!(flags(&cpu, ZF|PF|NF|CF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x0FFF, cpu.reg.hl());
-        assert_eq!(0x0000, cpu.reg.bc());
+        assert_eq!(0x0FFF, cpu.reg.get16(HL));
+        assert_eq!(0x0000, cpu.reg.get16(BC));
         assert!(flags(&cpu, NF|CF));
     }
-    
+
     #[test]
     fn test_cpdr() {
         let mut cpu = rz80::CPU::new_64k();
@@ -1841,25 +1834,25 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1002, cpu.reg.hl());
-        assert_eq!(0x0003, cpu.reg.bc());
+        assert_eq!(0x1002, cpu.reg.get16(HL));
+        assert_eq!(0x0003, cpu.reg.get16(BC));
         assert!(flags(&cpu, SF|HF|PF|NF));
-        let f = cpu.reg.f() | CF;
-        cpu.reg.set_f(f);
+        let f = cpu.reg.get8(F) | CF;
+        cpu.reg.set8(F, f);
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x0002, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x0002, cpu.reg.get16(BC));
         assert!(flags(&cpu, SF|HF|PF|NF|CF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(0x0001, cpu.reg.bc());
+        assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(0x0001, cpu.reg.get16(BC));
         assert!(flags(&cpu, ZF|PF|NF|CF));
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x0FFF, cpu.reg.hl());
-        assert_eq!(0x0000, cpu.reg.bc());
+        assert_eq!(0x0FFF, cpu.reg.get16(HL));
+        assert_eq!(0x0000, cpu.reg.get16(BC));
         assert!(flags(&cpu, NF|CF));
     }
-   
+
     #[test]
     fn test_add_adc_sbc_16() {
         let mut cpu = rz80::CPU::new_64k();
@@ -1888,26 +1881,26 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x00FC, cpu.reg.hl());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0008, cpu.reg.bc());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.de());
-        assert_eq!(11, cpu.step(bus)); assert_eq!(0x0104, cpu.reg.hl()); assert!(flags(&cpu, 0));
-        assert_eq!(11, cpu.step(bus)); assert_eq!(0x0103, cpu.reg.hl()); assert!(flags(&cpu, HF|CF));
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x010C, cpu.reg.hl()); assert!(flags(&cpu, 0));
-        assert_eq!(11, cpu.step(bus)); assert_eq!(0x0218, cpu.reg.hl()); assert!(flags(&cpu, 0));
-        assert_eq!(11, cpu.step(bus)); assert_eq!(0x0217, cpu.reg.hl()); assert!(flags(&cpu, HF|CF));
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x020E, cpu.reg.hl()); assert!(flags(&cpu, NF));
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x00FC, cpu.reg.ix());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.sp());
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x0104, cpu.reg.ix()); assert!(flags(&cpu, 0));
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x0103, cpu.reg.ix()); assert!(flags(&cpu, HF|CF));
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x0206, cpu.reg.ix()); assert!(flags(&cpu, 0));
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x1206, cpu.reg.ix()); assert!(flags(&cpu, 0));
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.iy());
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x0007, cpu.reg.iy()); assert!(flags(&cpu, HF|CF));
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x0006, cpu.reg.iy()); assert!(flags(&cpu, HF|CF));
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x000C, cpu.reg.iy()); assert!(flags(&cpu, 0));
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x100C, cpu.reg.iy()); assert!(flags(&cpu, 0));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x00FC, cpu.reg.get16(HL));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0008, cpu.reg.get16(BC));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.get16(DE));
+        assert_eq!(11, cpu.step(bus)); assert_eq!(0x0104, cpu.reg.get16(HL)); assert!(flags(&cpu, 0));
+        assert_eq!(11, cpu.step(bus)); assert_eq!(0x0103, cpu.reg.get16(HL)); assert!(flags(&cpu, HF|CF));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x010C, cpu.reg.get16(HL)); assert!(flags(&cpu, 0));
+        assert_eq!(11, cpu.step(bus)); assert_eq!(0x0218, cpu.reg.get16(HL)); assert!(flags(&cpu, 0));
+        assert_eq!(11, cpu.step(bus)); assert_eq!(0x0217, cpu.reg.get16(HL)); assert!(flags(&cpu, HF|CF));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x020E, cpu.reg.get16(HL)); assert!(flags(&cpu, NF));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x00FC, cpu.reg.get16(IX));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(SP));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x0104, cpu.reg.get16(IX)); assert!(flags(&cpu, 0));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x0103, cpu.reg.get16(IX)); assert!(flags(&cpu, HF|CF));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x0206, cpu.reg.get16(IX)); assert!(flags(&cpu, 0));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x1206, cpu.reg.get16(IX)); assert!(flags(&cpu, 0));
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0xFFFF, cpu.reg.get16(IY));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x0007, cpu.reg.get16(IY)); assert!(flags(&cpu, HF|CF));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x0006, cpu.reg.get16(IY)); assert!(flags(&cpu, HF|CF));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x000C, cpu.reg.get16(IY)); assert!(flags(&cpu, 0));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x100C, cpu.reg.get16(IY)); assert!(flags(&cpu, 0));
     }
 
     #[test]
@@ -1929,13 +1922,13 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(16, cpu.step(bus)); assert_eq!(0x0201, cpu.reg.hl());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0302, cpu.reg.bc());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0403, cpu.reg.de());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0504, cpu.reg.hl());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0605, cpu.reg.sp());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0706, cpu.reg.ix());
-        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0807, cpu.reg.iy());
+        assert_eq!(16, cpu.step(bus)); assert_eq!(0x0201, cpu.reg.get16(HL));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0302, cpu.reg.get16(BC));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0403, cpu.reg.get16(DE));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0504, cpu.reg.get16(HL));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0605, cpu.reg.get16(SP));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0706, cpu.reg.get16(IX));
+        assert_eq!(20, cpu.step(bus)); assert_eq!(0x0807, cpu.reg.get16(IY));
     }
 
     #[test]
@@ -1960,19 +1953,19 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0201, cpu.reg.hl());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0201, cpu.reg.get16(HL));
         assert_eq!(16, cpu.step(bus)); assert_eq!(0x0201, cpu.mem.r16(0x1000));
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.bc());       
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(BC));
         assert_eq!(20, cpu.step(bus)); assert_eq!(0x1234, cpu.mem.r16(0x1002));
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.de());       
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.get16(DE));
         assert_eq!(20, cpu.step(bus)); assert_eq!(0x5678, cpu.mem.r16(0x1004));
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.hl());       
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x9ABC, cpu.reg.get16(HL));
         assert_eq!(20, cpu.step(bus)); assert_eq!(0x9ABC, cpu.mem.r16(0x1006));
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1368, cpu.reg.sp());       
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1368, cpu.reg.get16(SP));
         assert_eq!(20, cpu.step(bus)); assert_eq!(0x1368, cpu.mem.r16(0x1008));
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x4321, cpu.reg.ix());       
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x4321, cpu.reg.get16(IX));
         assert_eq!(20, cpu.step(bus)); assert_eq!(0x4321, cpu.mem.r16(0x100A));
-        assert_eq!(14, cpu.step(bus)); assert_eq!(0x8765, cpu.reg.iy());       
+        assert_eq!(14, cpu.step(bus)); assert_eq!(0x8765, cpu.reg.get16(IY));
         assert_eq!(20, cpu.step(bus)); assert_eq!(0x8765, cpu.mem.r16(0x100C));
     }
 
@@ -1992,14 +1985,14 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a());
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a()); assert!(flags(&cpu, SF|HF|NF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|HF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.a()); assert!(flags(&cpu, SF|PF|NF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x80, cpu.reg.a()); assert!(flags(&cpu, SF|PF|NF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xC0, cpu.reg.a()); assert!(flags(&cpu, SF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x40, cpu.reg.a()); assert!(flags(&cpu, NF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A)); assert!(flags(&cpu, SF|HF|NF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|HF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF|NF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x80, cpu.reg.get8(A)); assert!(flags(&cpu, SF|PF|NF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xC0, cpu.reg.get8(A)); assert!(flags(&cpu, SF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x40, cpu.reg.get8(A)); assert!(flags(&cpu, NF|CF));
     }
 
     #[test]
@@ -2010,7 +2003,7 @@ mod test_opcodes {
         cpu.iff2 = true;
         cpu.reg.r = 0x34;
         cpu.reg.i = 0x1;
-        cpu.reg.set_f(CF);
+        cpu.reg.set8(F, CF);
         let prog = [
             0xED, 0x57,         // LD A,I
             0x97,               // SUB A
@@ -2018,9 +2011,9 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(9, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, PF|CF));
-        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|NF));
-        assert_eq!(9, cpu.step(bus)); assert_eq!(0x39, cpu.reg.a()); assert!(flags(&cpu, PF));
+        assert_eq!(9, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, PF|CF));
+        assert_eq!(4, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|NF));
+        assert_eq!(9, cpu.step(bus)); assert_eq!(0x39, cpu.reg.get8(A)); assert!(flags(&cpu, PF));
     }
 
     #[test]
@@ -2033,7 +2026,7 @@ mod test_opcodes {
             0xED, 0x4F,     // LD R,A
         ];
         cpu.mem.write(0x0000, &prog);
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x45, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x45, cpu.reg.get8(A));
         assert_eq!(9, cpu.step(bus)); assert_eq!(0x45, cpu.reg.i);
         assert_eq!(9, cpu.step(bus)); assert_eq!(0x45, cpu.reg.r);
     }
@@ -2087,34 +2080,34 @@ mod test_opcodes {
         for _ in 0..7 {
             cpu.step(bus);
         }
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x80, cpu.reg.a()); assert!(flags(&cpu, SF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.b()); assert!(flags(&cpu, SF|PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.b()); assert!(flags(&cpu, SF|PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x06, cpu.reg.c()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x03, cpu.reg.c()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFD, cpu.reg.d()); assert!(flags(&cpu, SF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.d()); assert!(flags(&cpu, SF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x88, cpu.reg.e()); assert!(flags(&cpu, SF|PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x11, cpu.reg.e()); assert!(flags(&cpu, PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x7E, cpu.reg.h()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.h()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xE0, cpu.reg.l()); assert!(flags(&cpu, SF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x70, cpu.reg.l()); assert!(flags(&cpu, 0));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x7F, cpu.reg.b()); assert!(flags(&cpu, CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.b()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x06, cpu.reg.c()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x03, cpu.reg.c()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFC, cpu.reg.d()); assert!(flags(&cpu, SF|PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.d()); assert!(flags(&cpu, SF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x08, cpu.reg.e()); assert!(flags(&cpu, CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x11, cpu.reg.e()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x7E, cpu.reg.h()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.h()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xE0, cpu.reg.l()); assert!(flags(&cpu, SF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x70, cpu.reg.l()); assert!(flags(&cpu, 0));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x80, cpu.reg.get8(A)); assert!(flags(&cpu, SF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(B)); assert!(flags(&cpu, SF|PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(B)); assert!(flags(&cpu, SF|PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x06, cpu.reg.get8(C)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x03, cpu.reg.get8(C)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFD, cpu.reg.get8(D)); assert!(flags(&cpu, SF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.get8(D)); assert!(flags(&cpu, SF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x88, cpu.reg.get8(E)); assert!(flags(&cpu, SF|PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x11, cpu.reg.get8(E)); assert!(flags(&cpu, PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x7E, cpu.reg.get8(H)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.get8(H)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xE0, cpu.reg.get8(L)); assert!(flags(&cpu, SF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x70, cpu.reg.get8(L)); assert!(flags(&cpu, 0));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x7F, cpu.reg.get8(B)); assert!(flags(&cpu, CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(B)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x06, cpu.reg.get8(C)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x03, cpu.reg.get8(C)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFC, cpu.reg.get8(D)); assert!(flags(&cpu, SF|PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.get8(D)); assert!(flags(&cpu, SF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x08, cpu.reg.get8(E)); assert!(flags(&cpu, CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x11, cpu.reg.get8(E)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x7E, cpu.reg.get8(H)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.get8(H)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xE0, cpu.reg.get8(L)); assert!(flags(&cpu, SF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x70, cpu.reg.get8(L)); assert!(flags(&cpu, 0));
     }
 
     #[test]
@@ -2159,29 +2152,29 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(15, cpu.step(bus)); assert_eq!(0x80, cpu.mem.r8(0x1000)); assert!(flags(&cpu, SF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.get8(A));
         assert_eq!(15, cpu.step(bus)); assert_eq!(0x01, cpu.mem.r8(0x1000)); assert!(flags(&cpu, CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A));
         assert_eq!(23, cpu.step(bus)); assert_eq!(0xFF, cpu.mem.r8(0x1001)); assert!(flags(&cpu, SF|PF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a());
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A));
         assert_eq!(23, cpu.step(bus)); assert_eq!(0xFF, cpu.mem.r8(0x1001)); assert!(flags(&cpu, SF|PF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a());
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A));
         assert_eq!(23, cpu.step(bus)); assert_eq!(0x88, cpu.mem.r8(0x1002)); assert!(flags(&cpu, SF|PF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x88, cpu.reg.a());
-        assert_eq!(23, cpu.step(bus)); assert_eq!(0x11, cpu.mem.r8(0x1002)); assert!(flags(&cpu, PF|CF)); 
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x11, cpu.reg.a());
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x80, cpu.mem.r8(0x1000)); assert!(flags(&cpu, SF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.a());
-        assert_eq!(15, cpu.step(bus)); assert_eq!(0x01, cpu.mem.r8(0x1000)); assert!(flags(&cpu, CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a());
-        assert_eq!(23, cpu.step(bus)); assert_eq!(0xFF, cpu.mem.r8(0x1001)); assert!(flags(&cpu, SF|PF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a());
-        assert_eq!(23, cpu.step(bus)); assert_eq!(0xFF, cpu.mem.r8(0x1001)); assert!(flags(&cpu, SF|PF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.a());
-        assert_eq!(23, cpu.step(bus)); assert_eq!(0x23, cpu.mem.r8(0x1002)); assert!(flags(&cpu, 0));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x23, cpu.reg.a());
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x88, cpu.reg.get8(A));
         assert_eq!(23, cpu.step(bus)); assert_eq!(0x11, cpu.mem.r8(0x1002)); assert!(flags(&cpu, PF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x11, cpu.reg.a());
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x11, cpu.reg.get8(A));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x80, cpu.mem.r8(0x1000)); assert!(flags(&cpu, SF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x80, cpu.reg.get8(A));
+        assert_eq!(15, cpu.step(bus)); assert_eq!(0x01, cpu.mem.r8(0x1000)); assert!(flags(&cpu, CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A));
+        assert_eq!(23, cpu.step(bus)); assert_eq!(0xFF, cpu.mem.r8(0x1001)); assert!(flags(&cpu, SF|PF|CF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A));
+        assert_eq!(23, cpu.step(bus)); assert_eq!(0xFF, cpu.mem.r8(0x1001)); assert!(flags(&cpu, SF|PF|CF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(A));
+        assert_eq!(23, cpu.step(bus)); assert_eq!(0x23, cpu.mem.r8(0x1002)); assert!(flags(&cpu, 0));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x23, cpu.reg.get8(A));
+        assert_eq!(23, cpu.step(bus)); assert_eq!(0x11, cpu.mem.r8(0x1002)); assert!(flags(&cpu, PF|CF));
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x11, cpu.reg.get8(A));
     }
 
     #[test]
@@ -2210,13 +2203,13 @@ mod test_opcodes {
         for _ in 0..7 {
             cpu.step(bus);
         }
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x02, cpu.reg.a()); assert!(flags(&cpu, 0));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.b()); assert!(flags(&cpu, ZF|PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x54, cpu.reg.c()); assert!(flags(&cpu, CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFC, cpu.reg.d()); assert!(flags(&cpu, SF|PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.e()); assert!(flags(&cpu, SF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x22, cpu.reg.h()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.l()); assert!(flags(&cpu, ZF|PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x02, cpu.reg.get8(A)); assert!(flags(&cpu, 0));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(B)); assert!(flags(&cpu, ZF|PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x54, cpu.reg.get8(C)); assert!(flags(&cpu, CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFC, cpu.reg.get8(D)); assert!(flags(&cpu, SF|PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.get8(E)); assert!(flags(&cpu, SF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x22, cpu.reg.get8(H)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(L)); assert!(flags(&cpu, ZF|PF));
     }
 
     #[test]
@@ -2245,13 +2238,13 @@ mod test_opcodes {
         for _ in 0..7 {
             cpu.step(bus);
         }
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xC0, cpu.reg.b()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xD5, cpu.reg.c()); assert!(flags(&cpu, SF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.d()); assert!(flags(&cpu, SF|PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.e()); assert!(flags(&cpu, PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x08, cpu.reg.h()); assert!(flags(&cpu, CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.l()); assert!(flags(&cpu, ZF|PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xC0, cpu.reg.get8(B)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xD5, cpu.reg.get8(C)); assert!(flags(&cpu, SF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0xFF, cpu.reg.get8(D)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.get8(E)); assert!(flags(&cpu, PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x08, cpu.reg.get8(H)); assert!(flags(&cpu, CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(L)); assert!(flags(&cpu, ZF|PF));
     }
 
     #[test]
@@ -2280,13 +2273,13 @@ mod test_opcodes {
         for _ in 0..7 {
             cpu.step(bus);
         }
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert!(flags(&cpu, ZF|PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x40, cpu.reg.b()); assert!(flags(&cpu, 0));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x55, cpu.reg.c()); assert!(flags(&cpu, PF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x7F, cpu.reg.d()); assert!(flags(&cpu, 0));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.e()); assert!(flags(&cpu, PF|CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x08, cpu.reg.h()); assert!(flags(&cpu, CF));
-        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.l()); assert!(flags(&cpu, ZF|PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert!(flags(&cpu, ZF|PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x40, cpu.reg.get8(B)); assert!(flags(&cpu, 0));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x55, cpu.reg.get8(C)); assert!(flags(&cpu, PF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x7F, cpu.reg.get8(D)); assert!(flags(&cpu, 0));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x3F, cpu.reg.get8(E)); assert!(flags(&cpu, PF|CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x08, cpu.reg.get8(H)); assert!(flags(&cpu, CF));
+        assert_eq!(8, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(L)); assert!(flags(&cpu, ZF|PF));
     }
 
     #[test]
@@ -2313,11 +2306,11 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(15, cpu.step(bus)); assert_eq!(0x02, cpu.mem.r8(0x1000)); assert!(flags(&cpu, 0));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x02, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x02, cpu.reg.get8(A));
         assert_eq!(23, cpu.step(bus)); assert_eq!(0x00, cpu.mem.r8(0x1001)); assert!(flags(&cpu, ZF|PF|CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
         assert_eq!(23, cpu.step(bus)); assert_eq!(0x54, cpu.mem.r8(0x1002)); assert!(flags(&cpu, CF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x54, cpu.reg.a());
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x54, cpu.reg.get8(A));
     }
 
     #[test]
@@ -2344,11 +2337,11 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(15, cpu.step(bus)); assert_eq!(0x00, cpu.mem.r8(0x1000)); assert!(flags(&cpu, ZF|PF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
         assert_eq!(23, cpu.step(bus)); assert_eq!(0xC0, cpu.mem.r8(0x1001)); assert!(flags(&cpu, SF|PF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xC0, cpu.reg.a());
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xC0, cpu.reg.get8(A));
         assert_eq!(23, cpu.step(bus)); assert_eq!(0xD5, cpu.mem.r8(0x1002)); assert!(flags(&cpu, SF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0xD5, cpu.reg.a());
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0xD5, cpu.reg.get8(A));
     }
 
     #[test]
@@ -2375,11 +2368,11 @@ mod test_opcodes {
             cpu.step(bus);
         }
         assert_eq!(15, cpu.step(bus)); assert_eq!(0x00, cpu.mem.r8(0x1000)); assert!(flags(&cpu, ZF|PF|CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
         assert_eq!(23, cpu.step(bus)); assert_eq!(0x40, cpu.mem.r8(0x1001)); assert!(flags(&cpu, 0));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x40, cpu.reg.a());
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x40, cpu.reg.get8(A));
         assert_eq!(23, cpu.step(bus)); assert_eq!(0x55, cpu.mem.r8(0x1002)); assert!(flags(&cpu, PF));
-        assert_eq!(19, cpu.step(bus)); assert_eq!(0x55, cpu.reg.a());
+        assert_eq!(19, cpu.step(bus)); assert_eq!(0x55, cpu.reg.get8(A));
     }
 
     #[test]
@@ -2406,24 +2399,24 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x12, cpu.reg.a());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.hl());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(A));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(HL));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x34, cpu.mem.r8(0x1000));
-        assert_eq!(18, cpu.step(bus)); assert_eq!(0x14, cpu.reg.a()); assert_eq!(0x23, cpu.mem.r8(0x1000));
-        assert_eq!(18, cpu.step(bus)); assert_eq!(0x12, cpu.reg.a()); assert_eq!(0x34, cpu.mem.r8(0x1000));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x34, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.a());
+        assert_eq!(18, cpu.step(bus)); assert_eq!(0x14, cpu.reg.get8(A)); assert_eq!(0x23, cpu.mem.r8(0x1000));
+        assert_eq!(18, cpu.step(bus)); assert_eq!(0x12, cpu.reg.get8(A)); assert_eq!(0x34, cpu.mem.r8(0x1000));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x34, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.get8(A));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x00, cpu.mem.r8(0x1000));
-        assert_eq!(18, cpu.step(bus)); assert_eq!(0xF0, cpu.reg.a()); assert_eq!(0x0E, cpu.mem.r8(0x1000)); assert!(flags(&cpu, SF|PF));
-        assert_eq!(18, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.a()); assert_eq!(0x00, cpu.mem.r8(0x1000)); assert!(flags(&cpu, SF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a());
+        assert_eq!(18, cpu.step(bus)); assert_eq!(0xF0, cpu.reg.get8(A)); assert_eq!(0x0E, cpu.mem.r8(0x1000)); assert!(flags(&cpu, SF|PF));
+        assert_eq!(18, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.get8(A)); assert_eq!(0x00, cpu.mem.r8(0x1000)); assert!(flags(&cpu, SF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A));
         assert_eq!(10, cpu.step(bus)); assert_eq!(0x00, cpu.mem.r8(0x1000));
-        let f = cpu.reg.f() | CF;
-        cpu.reg.set_f(f);
-        assert_eq!(18, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a()); assert_eq!(0x01, cpu.mem.r8(0x1000)); assert!(flags(&cpu, ZF|PF|CF));
-        assert_eq!(18, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert_eq!(0x00, cpu.mem.r8(0x1000)); assert!(flags(&cpu, CF));
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.a());
+        let f = cpu.reg.get8(F) | CF;
+        cpu.reg.set8(F, f);
+        assert_eq!(18, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A)); assert_eq!(0x01, cpu.mem.r8(0x1000)); assert!(flags(&cpu, ZF|PF|CF));
+        assert_eq!(18, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert_eq!(0x00, cpu.mem.r8(0x1000)); assert!(flags(&cpu, CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(A));
     }
 
     #[test]
@@ -2448,23 +2441,23 @@ mod test_opcodes {
             0xED, 0x48,         // IN C,(B)
         ];
         cpu.mem.write(0x0000, &prog);
-        cpu.reg.set_f(HF|CF);
+        cpu.reg.set8(F, HF|CF);
 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a()); assert!(flags(&cpu, HF|CF));
-        assert_eq!(11, cpu.step(bus)); assert_eq!(0x06, cpu.reg.a()); assert!(flags(&cpu, HF|CF));
-        assert_eq!(11, cpu.step(bus)); assert_eq!(0x08, cpu.reg.a()); assert!(flags(&cpu, HF|CF));
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0202, cpu.reg.bc());
-        assert_eq!(12, cpu.step(bus)); assert_eq!(0x04, cpu.reg.a()); assert!(flags(&cpu, CF));
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x05FF, cpu.reg.bc());
-        assert_eq!(12, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.d()); assert!(flags(&cpu, SF|CF));
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0505, cpu.reg.bc());
-        assert_eq!(12, cpu.step(bus)); assert_eq!(0x0A, cpu.reg.e()); assert!(flags(&cpu, PF|CF));
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0106, cpu.reg.bc());
-        assert_eq!(12, cpu.step(bus)); assert_eq!(0x0C, cpu.reg.h()); assert!(flags(&cpu, PF|CF));
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.bc());
-        assert_eq!(12, cpu.step(bus)); assert_eq!(0x00, cpu.reg.l()); assert!(flags(&cpu, ZF|PF|CF));
-        assert_eq!(12, cpu.step(bus)); assert_eq!(0x00, cpu.reg.b()); assert!(flags(&cpu, ZF|PF|CF));
-        assert_eq!(12, cpu.step(bus)); assert_eq!(0x00, cpu.reg.c()); assert!(flags(&cpu, ZF|PF|CF));
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A)); assert!(flags(&cpu, HF|CF));
+        assert_eq!(11, cpu.step(bus)); assert_eq!(0x06, cpu.reg.get8(A)); assert!(flags(&cpu, HF|CF));
+        assert_eq!(11, cpu.step(bus)); assert_eq!(0x08, cpu.reg.get8(A)); assert!(flags(&cpu, HF|CF));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0202, cpu.reg.get16(BC));
+        assert_eq!(12, cpu.step(bus)); assert_eq!(0x04, cpu.reg.get8(A)); assert!(flags(&cpu, CF));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x05FF, cpu.reg.get16(BC));
+        assert_eq!(12, cpu.step(bus)); assert_eq!(0xFE, cpu.reg.get8(D)); assert!(flags(&cpu, SF|CF));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0505, cpu.reg.get16(BC));
+        assert_eq!(12, cpu.step(bus)); assert_eq!(0x0A, cpu.reg.get8(E)); assert!(flags(&cpu, PF|CF));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0106, cpu.reg.get16(BC));
+        assert_eq!(12, cpu.step(bus)); assert_eq!(0x0C, cpu.reg.get8(H)); assert!(flags(&cpu, PF|CF));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(BC));
+        assert_eq!(12, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(L)); assert!(flags(&cpu, ZF|PF|CF));
+        assert_eq!(12, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(B)); assert!(flags(&cpu, ZF|PF|CF));
+        assert_eq!(12, cpu.step(bus)); assert_eq!(0x00, cpu.reg.get8(C)); assert!(flags(&cpu, ZF|PF|CF));
     }
 
     #[test]
@@ -2488,12 +2481,12 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.a());
+        assert_eq!(7, cpu.step(bus)); assert_eq!(0x01, cpu.reg.get8(A));
         assert_eq!(11, cpu.step(bus)); assert_eq!(0x0101, bus.port.get()); assert_eq!(0x01, bus.val.get());
         assert_eq!(11, cpu.step(bus)); assert_eq!(0x0102, bus.port.get()); assert_eq!(0x01, bus.val.get());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.bc());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.de());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0xABCD, cpu.reg.hl());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1234, cpu.reg.get16(BC));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x5678, cpu.reg.get16(DE));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0xABCD, cpu.reg.get16(HL));
         assert_eq!(12, cpu.step(bus)); assert_eq!(0x1234, bus.port.get()); assert_eq!(0x01, bus.val.get());
         assert_eq!(12, cpu.step(bus)); assert_eq!(0x1234, bus.port.get()); assert_eq!(0x12, bus.val.get());
         assert_eq!(12, cpu.step(bus)); assert_eq!(0x1234, bus.port.get()); assert_eq!(0x34, bus.val.get());
@@ -2516,43 +2509,43 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0302, cpu.reg.bc());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0302, cpu.reg.get16(BC));
 
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x0202, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x0202, cpu.reg.get16(BC));
         assert_eq!(0x04, cpu.mem.r8(0x1000));
-        assert_eq!((cpu.reg.f() & ZF), 0);
+        assert_eq!((cpu.reg.get8(F) & ZF), 0);
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1002, cpu.reg.hl());
-        assert_eq!(0x0102, cpu.reg.bc());
+        assert_eq!(0x1002, cpu.reg.get16(HL));
+        assert_eq!(0x0102, cpu.reg.get16(BC));
         assert_eq!(0x04, cpu.mem.r8(0x1001));
-        assert_eq!((cpu.reg.f() & ZF), 0);
+        assert_eq!((cpu.reg.get8(F) & ZF), 0);
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1003, cpu.reg.hl());
-        assert_eq!(0x0002, cpu.reg.bc());
+        assert_eq!(0x1003, cpu.reg.get16(HL));
+        assert_eq!(0x0002, cpu.reg.get16(BC));
         assert_eq!(0x04, cpu.mem.r8(0x1002));
-        assert!((cpu.reg.f() & ZF) != 0);
+        assert!((cpu.reg.get8(F) & ZF) != 0);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0303, cpu.reg.bc());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0303, cpu.reg.get16(BC));
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1002, cpu.reg.hl());
-        assert_eq!(0x0203, cpu.reg.bc());
+        assert_eq!(0x1002, cpu.reg.get16(HL));
+        assert_eq!(0x0203, cpu.reg.get16(BC));
         assert_eq!(0x06, cpu.mem.r8(0x1003));
-        assert_eq!((cpu.reg.f() & ZF), 0);
+        assert_eq!((cpu.reg.get8(F) & ZF), 0);
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x0103, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x0103, cpu.reg.get16(BC));
         assert_eq!(0x06, cpu.mem.r8(0x1002));
-        assert_eq!((cpu.reg.f() & ZF), 0);
+        assert_eq!((cpu.reg.get8(F) & ZF), 0);
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(0x0003, cpu.reg.bc());
+        assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(0x0003, cpu.reg.get16(BC));
         assert_eq!(0x06, cpu.mem.r8(0x1001));
-        assert!((cpu.reg.f() & ZF) != 0);
+        assert!((cpu.reg.get8(F) & ZF) != 0);
     }
-   
+
     #[test]
     fn test_otir_otdr() {
         let mut cpu = rz80::CPU::new_64k();
@@ -2568,38 +2561,38 @@ mod test_opcodes {
         ];
         cpu.mem.write(0x0000, &prog);
 
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0302, cpu.reg.bc());
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0302, cpu.reg.get16(BC));
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x0202, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x0202, cpu.reg.get16(BC));
         assert_eq!(0x0202, bus.port.get()); assert_eq!(0x01, bus.val.get());
-        assert_eq!((cpu.reg.f() & ZF), 0);
+        assert_eq!((cpu.reg.get8(F) & ZF), 0);
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1002, cpu.reg.hl());
-        assert_eq!(0x0102, cpu.reg.bc());
+        assert_eq!(0x1002, cpu.reg.get16(HL));
+        assert_eq!(0x0102, cpu.reg.get16(BC));
         assert_eq!(0x0102, bus.port.get()); assert_eq!(0x02, bus.val.get());
-        assert_eq!((cpu.reg.f() & ZF), 0);
+        assert_eq!((cpu.reg.get8(F) & ZF), 0);
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1003, cpu.reg.hl());
-        assert_eq!(0x0002, cpu.reg.bc());
+        assert_eq!(0x1003, cpu.reg.get16(HL));
+        assert_eq!(0x0002, cpu.reg.get16(BC));
         assert_eq!(0x0002, bus.port.get()); assert_eq!(0x03, bus.val.get());
-        assert!((cpu.reg.f() & ZF) != 0);
-        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0303, cpu.reg.bc());
+        assert!((cpu.reg.get8(F) & ZF) != 0);
+        assert_eq!(10, cpu.step(bus)); assert_eq!(0x0303, cpu.reg.get16(BC));
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1002, cpu.reg.hl());
-        assert_eq!(0x0203, cpu.reg.bc());
+        assert_eq!(0x1002, cpu.reg.get16(HL));
+        assert_eq!(0x0203, cpu.reg.get16(BC));
         assert_eq!(0x0203, bus.port.get()); assert_eq!(0x04, bus.val.get());
-        assert_eq!((cpu.reg.f() & ZF), 0);
+        assert_eq!((cpu.reg.get8(F) & ZF), 0);
         assert_eq!(21, cpu.step(bus));
-        assert_eq!(0x1001, cpu.reg.hl());
-        assert_eq!(0x0103, cpu.reg.bc());
+        assert_eq!(0x1001, cpu.reg.get16(HL));
+        assert_eq!(0x0103, cpu.reg.get16(BC));
         assert_eq!(0x0103, bus.port.get()); assert_eq!(0x03, bus.val.get());
-        assert_eq!((cpu.reg.f() & ZF), 0);
+        assert_eq!((cpu.reg.get8(F) & ZF), 0);
         assert_eq!(16, cpu.step(bus));
-        assert_eq!(0x1000, cpu.reg.hl());
-        assert_eq!(0x0003, cpu.reg.bc());
+        assert_eq!(0x1000, cpu.reg.get16(HL));
+        assert_eq!(0x0003, cpu.reg.get16(BC));
         assert_eq!(0x0003, bus.port.get()); assert_eq!(0x02, bus.val.get());
-        assert!((cpu.reg.f() & ZF) != 0);
+        assert!((cpu.reg.get8(F) & ZF) != 0);
     }
 }

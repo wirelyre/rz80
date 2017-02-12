@@ -47,7 +47,8 @@ mod pio;
 mod ctc;
 mod daisychain;
 
-pub use registers::{Registers, CF, NF, VF, PF, XF, HF, YF, ZF, SF};
+pub use registers::{Registers, Register8, Register16,
+    CF, NF, VF, PF, XF, HF, YF, ZF, SF};
 pub use memory::Memory;
 pub use cpu::CPU;
 pub use bus::Bus;
